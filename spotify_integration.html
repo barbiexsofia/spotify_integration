@@ -27,6 +27,8 @@ const clientSecret = '71c4b5a213b446c5a834a7c10c5bd738';
     const clientSecret = '71c4b5a213b446c5a834a7c10c5bd738';
     const redirectUri = `https://barbiexsofia.github.io/spotify_integration/spotify_integration.html`;
 
+    let lastPlayedSong = '';
+
     // Step 1: Authenticate the user and obtain an access token
     function authenticateUser() {
       const scopes = 'user-read-recently-played'; // Requested scopes
