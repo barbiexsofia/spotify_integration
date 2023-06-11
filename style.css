@@ -41,3 +41,8 @@
     font-size: 18px;
   }
   
+  /* Hide the last played song element initially */
+  .hidden {
+    display: none;
+  }
+  
