@@ -2,84 +2,95 @@
 <html>
 <head>
   <title>Spotify Integration</title>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <style>
-    #spotifyContainer {
-      margin-top: 20px;
-    }
-    #lastSongContainer {
-      margin-top: 20px;
-    }
-  </style>
+  <!-- Include necessary stylesheets and scripts -->
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
 </head>
 <body>
   <h1>Spotify Integration</h1>
 
-  <div id="spotifyContainer">
-    <button onclick="toggleSpotifyInput()">Connect to Spotify</button>
-    <div id="spotifyInputContainer" style="display: none;">
-      <input type="text" id="spotifyApiKey" placeholder="Enter Spotify API Key">
-      <button onclick="connectToSpotify()">Connect</button>
-    </div>
-  </div>
+  <!-- Add the "Connect to Spotify" button -->
+  <button id="connectButton">Connect to Spotify</button>
 
-  <div id="lastSongContainer" style="display: none;">
-    <h2>Last Played Song</h2>
-    <div id="lastSong"></div>
-  </div>
+  <!-- Display the last played song -->
+  <div id="lastPlayedSong"></div>
+
+  <!-- Your existing HTML content goes here -->
 
   <script>
-    var spotifyApiKey = "";
+    // Set your Spotify Client ID and Client Secret
+    const clientId = 'afa1b23fa74b4874ac2b2fbc1ad27943';
+    const clientSecret = '71c4b5a213b446c5a834a7c10c5bd738';
+    const redirectUri = 'http://localhost:3000/callback';
 
-    function toggleSpotifyInput() {
-      var spotifyInputContainer = document.getElementById("spotifyInputContainer");
-      if (spotifyInputContainer.style.display === "none") {
-        spotifyInputContainer.style.display = "block";
-      } else {
-        spotifyInputContainer.style.display = "none";
-      }
+    // Step 1: Authenticate the user and obtain an access token
+    function authenticateUser() {
+      const scopes = 'user-read-recently-played'; // Requested scopes
+      const authorizeUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      window.location.href = authorizeUrl;
     }
 
-    function connectToSpotify() {
-      var spotifyApiKeyInput = document.getElementById("spotifyApiKey");
-      spotifyApiKey = spotifyApiKeyInput.value.trim();
-      if (spotifyApiKey) {
-        fetchLastSong();
-        toggleSpotifyInput();
-        showLastSongContainer();
-      }
-    }
+    // Step 2: Handle the callback after user authentication
+    function handleCallback() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const authorizationCode = urlParams.get('code');
 
-    function fetchLastSong() {
-      var apiUrl = "https://api.spotify.com/v1/me/player/recently-played?limit=1";
-      $.ajax({
-        url: apiUrl,
+      const tokenUrl = 'https://accounts.spotify.com/api/token';
+      const bodyParams = new URLSearchParams();
+      bodyParams.append('grant_type', 'authorization_code');
+      bodyParams.append('code', authorizationCode);
+      bodyParams.append('redirect_uri', redirectUri);
+
+      fetch(tokenUrl, {
+        method: 'POST',
         headers: {
-          "Authorization": "Bearer " + spotifyApiKey
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`
         },
-        success: function(data) {
-          if (data && data.items && data.items.length > 0) {
-            var lastSong = data.items[0].track.name;
-            showLastSong(lastSong);
-          } else {
-            showLastSong("No recently played songs found.");
-          }
-        },
-        error: function() {
-          showLastSong("Error fetching the last played song.");
-        }
+        body: bodyParams
+      })
+      .then(response => response.json())
+      .then(data => {
+        const accessToken = data.access_token;
+        const refreshToken = data.refresh_token;
+
+        // Store the access token and refresh token securely for future use
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+
+        // Continue with accessing the user's recently played tracks
+        getRecentlyPlayedTracks(accessToken);
+      })
+      .catch(error => {
+        console.error('Error:', error);
       });
     }
 
-    function showLastSongContainer() {
-      var lastSongContainer = document.getElementById("lastSongContainer");
-      lastSongContainer.style.display = "block";
+    // Step 3: Get the user's recently played tracks
+    function getRecentlyPlayedTracks(accessToken) {
+      const recentlyPlayedUrl = 'https://api.spotify.com/v1/me/player/recently-played';
+
+      fetch(recentlyPlayedUrl, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Display the last played song
+        const lastPlayedSong = data.items[0].track.name;
+        document.getElementById('lastPlayedSong').textContent = `Last Played Song: ${lastPlayedSong}`;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
     }
 
-    function showLastSong(songName) {
-      var lastSongElement = document.getElementById("lastSong");
-      lastSongElement.textContent = songName;
-    }
+    // Call the authenticateUser function when the "Connect to Spotify" button is clicked
+    document.getElementById('connectButton').addEventListener('click', authenticateUser);
+
+    // Call the handleCallback function on the callback page after Spotify authentication
+    handleCallback();
   </script>
 </body>
 </html>
