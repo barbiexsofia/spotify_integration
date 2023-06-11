@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Integration</title>
+</head>
+<body>
+  <h1>Spotify Integration</h1>
+
+  <!-- Display the last played song -->
+  <div id="lastPlayedSong"></div>
+
+  <script>
+    // Extract the access token from the URL hash fragment
+    const hashParams = window.location.hash.substr(1).split('&').reduce(function (result, item) {
+      const parts = item.split('=');
+      result[parts[0]] = parts[1];
+      return result;
+    }, {});
+
+    const accessToken = hashParams.access_token;
+
+    // Use the access token to get the user's recently played tracks
+    const recentlyPlayedUrl = 'https://api.spotify.com/v1/me/player/recently-played';
+
+    fetch(recentlyPlayedUrl, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Display the last played song
+      const lastPlayedSong = data.items[0].track.name;
+      document.getElementById('lastPlayedSong').textContent = `Last Played Song: ${lastPlayedSong}`;
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  </script>
+</body>
+</html>
