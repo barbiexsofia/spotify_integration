@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Integration!!</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    #spotifyContainer {
+      margin-top: 20px;
+    }
+    #lastSongContainer {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Spotify Integration</h1>
+
+  <div id="spotifyContainer">
+    <button onclick="toggleSpotifyInput()">Connect to Spotify</button>
+    <div id="spotifyInputContainer" style="display: none;">
+      <input type="text" id="spotifyApiKey" placeholder="Enter Spotify API Key">
+      <button onclick="connectToSpotify()">Connect</button>
+    </div>
+  </div>
+
+  <div id="lastSongContainer" style="display: none;">
+    <h2>Last Played Song</h2>
+    <div id="lastSong"></div>
+  </div>
+
+  <script>
+    var spotifyApiKey = "";
+
+    function toggleSpotifyInput() {
+      var spotifyInputContainer = document.getElementById("spotifyInputContainer");
+      if (spotifyInputContainer.style.display === "none") {
+        spotifyInputContainer.style.display = "block";
+      } else {
+        spotifyInputContainer.style.display = "none";
+      }
+    }
+
+    function connectToSpotify() {
+      var spotifyApiKeyInput = document.getElementById("spotifyApiKey");
+      spotifyApiKey = spotifyApiKeyInput.value.trim();
+      if (spotifyApiKey) {
+        fetchLastSong();
+        toggleSpotifyInput();
+        showLastSongContainer();
+      }
+    }
+
+    function fetchLastSong() {
+      var apiUrl = "https://api.spotify.com/v1/me/player/recently-played?limit=1";
+      $.ajax({
+        url: apiUrl,
+        headers: {
+          "Authorization": "Bearer " + spotifyApiKey
+        },
+        success: function(data) {
+          if (data && data.items && data.items.length > 0) {
+            var lastSong = data.items[0].track.name;
+            showLastSong(lastSong);
+          } else {
+            showLastSong("No recently played songs found.");
+          }
+        },
+        error: function() {
+          showLastSong("Error fetching the last played song.");
+        }
+      });
+    }
+
+    function showLastSongContainer() {
+      var lastSongContainer = document.getElementById("lastSongContainer");
+      lastSongContainer.style.display = "block";
+    }
+
+    function showLastSong(songName) {
+      var lastSongElement = document.getElementById("lastSong");
+      lastSongElement.textContent = songName;
+    }
+  </script>
+</body>
+</html>
