@@ -107,8 +107,9 @@
 
     // Log out the user when "Log Out" button is clicked
     document.getElementById('logoutButton').addEventListener('click', () => {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      // localStorage.removeItem('accessToken');
+      // localStorage.removeItem('refreshToken');
+      localStorage.clear();
       location.reload();
     });
 
